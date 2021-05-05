@@ -52,8 +52,15 @@ class Team:
         weken = list(set([wedstrijd.week for wedstrijd in self.wedstrijden]))
         return len([week for week in weken if self.aantal_wedstrijden_in_week(week) == aantal])
 
+    def laatste_ronde_in_week(self, week: int) -> int:
+        rondes = [wedstrijd.ronde for wedstrijd in self.wedstrijden if wedstrijd.week == week]
+        # print(self.nummer, week, rondes)
+        return max(rondes) if len(rondes) > 0 else None
+
     def sort(self, week: int = None, team: Team = None):
+        # laatste_ronde = self.laatste_ronde_in_week(week) if week is not None else None
         return (
+            # laatste_ronde * -1 if laatste_ronde is not None else 99,
             self.aantal_wedstrijden_in_week(week) if week is not None else 0,
             self.aantal_wedstrijden_tegen_team(team) if team is not None else 0,
             self.aantal_wedstrijden(),

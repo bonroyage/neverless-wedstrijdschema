@@ -8,10 +8,13 @@ from wedstrijd import Wedstrijd
 from wedstrijden import alle_wedstrijden
 
 
-def solve(with_solution: Callable[[Oplossing], Any], team_eisen: Callable[[Wedstrijd, Team], Optional[bool]]):
+def solve(with_solution: Callable[[Oplossing], Any], team_eisen: Callable[[Wedstrijd, Team], Optional[bool]], mag_leeg: Callable[[Wedstrijd], Optional[bool]]):
     __wedstrijden = alle_wedstrijden()
 
     def __do_solve():
+        from tools import summary
+        summary(True)
+
         for wedstrijd in __wedstrijden:
             if wedstrijd.team_1 is None:
                 for team1 in gesorteerde_nummers(None, wedstrijd.week):
@@ -25,6 +28,11 @@ def solve(with_solution: Callable[[Oplossing], Any], team_eisen: Callable[[Wedst
                                 wedstrijd.team2(None)
 
                         wedstrijd.team1(None)
+
+                if mag_leeg(wedstrijd):
+                    wedstrijd.team_1 = -1
+                    __do_solve()
+                    wedstrijd.team_1 = None
 
                 return
 

@@ -18,13 +18,13 @@ team_toevoegen("Hot Shots")
 team_toevoegen("Kroegtijgers")
 team_toevoegen("UiTerAardbei")
 team_toevoegen("In 't coronetje")
-team_toevoegen("Black Eyed Pils")
+team_toevoegen("Grey Goose")
 team_toevoegen("Ice Ice Baby")
 team_toevoegen("Blue Balls")
-team_toevoegen("Grey Goose")
+team_toevoegen("Black Eyed Pils")
 team_toevoegen("GoalDiggers")
 team_toevoegen("Pino Noir")
-team_toevoegen("Donker groen")
+team_toevoegen("Always More")
 team_toevoegen("LSD")
 
 """
@@ -172,4 +172,4 @@ De solve functie start de berekeningen. De functies zodra er een oplossing is en
 meegegeven.
 """
 
-solve(opgelost, team_mag_spelen)
+solve(opgelost, team_mag_spelen, lambda x: False)
