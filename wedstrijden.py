@@ -44,28 +44,27 @@ def teams_met_aantal_wedstrijden(aantal: int):
     teams = []
 
     for wedstrijd in __wedstrijden:
-        if wedstrijd.team_1 is not None and wedstrijd.team_1 != -1:
+        if wedstrijd.has_team():
             teams.append(wedstrijd.team_1.nummer)
-
-        if wedstrijd.team_2 is not None:
             teams.append(wedstrijd.team_2.nummer)
 
     return len([count for x, count in Counter(teams).items() if count == aantal])
 
 
-def teams_met_aantal_wedstrijden_in_week(week: int, aantal: int):
+def teams_met_aantal_wedstrijden_in_week(week: int, aantal: int, gte: bool = False):
     from collections import Counter
 
     teams_spelend_deze_week = []
 
     for wedstrijd in filter_wedstrijden(lambda w: w.week == week):
-        if wedstrijd.team_1 is not None and wedstrijd.team_1 != -1:
+        if isinstance(wedstrijd.team_1, Team):
             teams_spelend_deze_week.append(wedstrijd.team_1.nummer)
 
-        if wedstrijd.team_2 is not None:
+        if isinstance(wedstrijd.team_2, Team):
             teams_spelend_deze_week.append(wedstrijd.team_2.nummer)
 
-    return len([count for x, count in Counter(teams_spelend_deze_week).items() if count == aantal])
+    return len([count for x, count in Counter(teams_spelend_deze_week).items() if
+                count == aantal or (gte and count >= aantal)])
 
 
 def heeft_teams_met_lange_pauzes_in_week(week: int, ronde: int, aantal: int) -> bool:

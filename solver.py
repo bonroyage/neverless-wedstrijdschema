@@ -1,5 +1,5 @@
 import time
-from typing import Callable, Any, Optional
+from typing import Callable, Any, Optional, Union
 
 from oplossing import Oplossing
 from team import Team
@@ -8,15 +8,21 @@ from wedstrijd import Wedstrijd
 from wedstrijden import alle_wedstrijden
 
 
-def solve(with_solution: Callable[[Oplossing], Any], team_eisen: Callable[[Wedstrijd, Team], Optional[bool]], mag_leeg: Callable[[Wedstrijd], Optional[bool]]):
+def solve(
+        with_solution: Callable[[Oplossing], Any],
+        team_eisen: Callable[[Wedstrijd, Team], Optional[bool]],
+        mag_leeg: Union[bool, Callable[[Wedstrijd], Optional[bool]]] = False,
+        schema_compleet: Callable[[], Optional[bool]] = None,
+        pre_solve: Callable = None
+):
     __wedstrijden = alle_wedstrijden()
 
     def __do_solve():
-        from tools import summary
-        summary(True)
+        if pre_solve is not None:
+            pre_solve()
 
         for wedstrijd in __wedstrijden:
-            if wedstrijd.team_1 is None:
+            if wedstrijd.needs_team():
                 for team1 in gesorteerde_nummers(None, wedstrijd.week):
                     if wedstrijd.team_mag_spelen(get_team(team1), team_eisen):
                         wedstrijd.team1(get_team(team1))
@@ -25,18 +31,19 @@ def solve(with_solution: Callable[[Oplossing], Any], team_eisen: Callable[[Wedst
                             if wedstrijd.team_mag_spelen(get_team(team2), team_eisen):
                                 wedstrijd.team2(get_team(team2))
                                 __do_solve()
-                                wedstrijd.team2(None)
+                                wedstrijd.team2(False)
 
-                        wedstrijd.team1(None)
+                        wedstrijd.team1(False)
 
-                if mag_leeg(wedstrijd):
-                    wedstrijd.team_1 = -1
+                if (type(mag_leeg) == bool and mag_leeg) or (callable(mag_leeg) and mag_leeg(wedstrijd)):
+                    wedstrijd.team_1 = True
                     __do_solve()
-                    wedstrijd.team_1 = None
+                    wedstrijd.team_1 = False
 
                 return
 
-        raise Oplossing(__wedstrijden)
+        if schema_compleet is None or schema_compleet():
+            raise Oplossing(__wedstrijden)
 
     start_time = time.time()
 

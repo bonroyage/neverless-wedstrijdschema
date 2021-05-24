@@ -28,7 +28,7 @@ class Team:
 
         teams = [wedstrijd.andere_team(self) for wedstrijd in self.wedstrijden]
 
-        return len([count for x, count in Counter(teams).items() if count >= 2 and x is not None])
+        return len([count for x, count in Counter(teams).items() if count >= 2 and isinstance(x, Team)])
 
     def aantal_wedstrijden(self, callback: Optional[Callable[[Wedstrijd], bool]] = None) -> int:
         if callback is None:
@@ -54,13 +54,12 @@ class Team:
 
     def laatste_ronde_in_week(self, week: int) -> int:
         rondes = [wedstrijd.ronde for wedstrijd in self.wedstrijden if wedstrijd.week == week]
-        # print(self.nummer, week, rondes)
         return max(rondes) if len(rondes) > 0 else None
 
     def sort(self, week: int = None, team: Team = None):
-        # laatste_ronde = self.laatste_ronde_in_week(week) if week is not None else None
+        laatste_ronde = self.laatste_ronde_in_week(week) if week is not None else None
         return (
-            # laatste_ronde * -1 if laatste_ronde is not None else 99,
+            laatste_ronde * -1 if laatste_ronde is not None else 99,
             self.aantal_wedstrijden_in_week(week) if week is not None else 0,
             self.aantal_wedstrijden_tegen_team(team) if team is not None else 0,
             self.aantal_wedstrijden(),
