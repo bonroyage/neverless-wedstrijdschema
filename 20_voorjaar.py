@@ -1,7 +1,7 @@
 from oplossing import Oplossing
 from solver import solve
-from team import Team
-from teams import team_toevoegen
+from team import Team, sorteer_op_laatste_ronde
+from teams import team_toevoegen, alle_teams
 from wedstrijd import Wedstrijd
 from wedstrijden import wedstrijd_toevoegen as base_wedstrijd_toevoegen
 
@@ -27,6 +27,8 @@ team_toevoegen("Pino Noir")
 team_toevoegen("Always More")
 team_toevoegen("LSD")
 
+sorteer_op_laatste_ronde(False)
+
 """
 WEDSTRIJDEN
 ===========
@@ -40,7 +42,7 @@ def wedstrijd_toevoegen(week, ronde, *velden):
             wedstrijd.groep = "A" if wedstrijd.ronde <= 3 else "B"
 
 
-for week in range(15, 22):
+for week in range(15, 22):  # Week 15 tot 21
     wedstrijd_toevoegen(week, 1, 5, 6)
     wedstrijd_toevoegen(week, 2, 5, 6)
     wedstrijd_toevoegen(week, 3, 5, 6)
@@ -64,13 +66,19 @@ def team_speelt_in_groep(team: Team, wedstrijd: Wedstrijd) -> bool:
     return team.aantal_wedstrijden(lambda w: wedstrijd_is_zelfde_groep_als(w, wedstrijd)) > 0
 
 
+max_wedstrijden_per_team = 18
+aantal_teams = len(alle_teams())
+max_dubbele_wedstrijden = max_wedstrijden_per_team - aantal_teams + 1
+max_wedstrijden_per_week = 3
+
+
 def team_mag_spelen(wedstrijd: Wedstrijd, team: Team) -> bool:
     from wedstrijden import teams_in_wedstrijden, teams_met_aantal_wedstrijden_in_week, filter_wedstrijden
 
     is_vroege_groep: bool = wedstrijd.ronde <= 3
 
     """ Het team heeft al 18 wedstrijden gespeeld. """
-    if team.aantal_wedstrijden() >= 18:
+    if team.aantal_wedstrijden() >= max_wedstrijden_per_team:
         return False
 
     deze_week: int = team.aantal_wedstrijden_in_week(wedstrijd.week)
@@ -101,13 +109,9 @@ def team_mag_spelen(wedstrijd: Wedstrijd, team: Team) -> bool:
         if len(teams) >= (5 if is_vroege_groep else 10):
             return False
 
-    """ Een team kan natuurlijk niet twee wedstrijden op hetzelfde moment spelen. """
-    if team.speelt_in_ronde(wedstrijd):
-        return False
-
     """ De volgende condities kunnen alleen gecheckt worden als het team dat gecheckt wordt moet worden toegewezen aan
     het tweede team en we dus informatie hebben over de twee teams die tegen elkaar spelen """
-    if wedstrijd.team_1 is not None:
+    if isinstance(wedstrijd.team_1, Team):
 
         """ Voorkomen dat twee teams in dezelfde week twee keer tegen elkaar spelen """
         if wedstrijd.team_1.heeft_gespeeld_tegen_in_week(team, wedstrijd.week):
@@ -124,10 +128,10 @@ def team_mag_spelen(wedstrijd: Wedstrijd, team: Team) -> bool:
         bestaat dat dit team ingedeeld wordt tegen een team waar ze nog niet tegen hebben gespeeld """
         if al_gespeeld == 1:
 
-            if wedstrijd.team_1.aantal_dubbele_wedstrijden >= 5:
+            if wedstrijd.team_1.aantal_dubbele_wedstrijden >= max_dubbele_wedstrijden:
                 return False
 
-            if team.aantal_dubbele_wedstrijden >= 5:
+            if team.aantal_dubbele_wedstrijden >= max_dubbele_wedstrijden:
                 return False
 
 
@@ -144,24 +148,10 @@ def opgelost(oplossing: Oplossing):
         wedstrijd.week,
         wedstrijd.ronde,
         wedstrijd.veld,
-        wedstrijd.team_1.nummer if wedstrijd.team_1 is not None else "",
-        wedstrijd.team_2.nummer if wedstrijd.team_2 is not None else "",
-        wedstrijd.team_1.naam if wedstrijd.team_1 is not None else "",
-        wedstrijd.team_2.naam if wedstrijd.team_2 is not None else ""
-    ])
-
-    oplossing.wedstrijden_tonen_op_scherm([
-        "Week",
-        "Ronde",
-        "Veld",
-        "Team 1",
-        "Team 2"
-    ], lambda wedstrijd: [
-        wedstrijd.week,
-        wedstrijd.ronde,
-        wedstrijd.veld,
-        wedstrijd.team_1.naam if wedstrijd.team_1 is not None else "",
-        wedstrijd.team_2.naam if wedstrijd.team_2 is not None else ""
+        wedstrijd.team_1.nummer if wedstrijd.has_team() else "",
+        wedstrijd.team_2.nummer if wedstrijd.has_team() else "",
+        wedstrijd.team_1.naam if wedstrijd.has_team() else "",
+        wedstrijd.team_2.naam if wedstrijd.has_team() else "",
     ])
 
 
@@ -172,4 +162,29 @@ De solve functie start de berekeningen. De functies zodra er een oplossing is en
 meegegeven.
 """
 
-solve(opgelost, team_mag_spelen, lambda x: False)
+def summary():
+    from teams import alle_teams
+    from tabulate import tabulate
+    data = [[
+        team.naam,
+        team.aantal_wedstrijden(),
+        team.aantal_dubbele_wedstrijden,
+        team.aantal_wedstrijden_in_week(15),
+        team.aantal_wedstrijden_in_week(16),
+        team.aantal_wedstrijden_in_week(17),
+        team.aantal_wedstrijden_in_week(18),
+        team.aantal_wedstrijden_in_week(19),
+        team.aantal_wedstrijden_in_week(20),
+        team.aantal_wedstrijden_in_week(21),
+    ] for team in alle_teams()]
+
+    print("\033[F" * (len(data) + 4))
+
+    print(tabulate(data, headers=["Team", "Totaal", "Dubbel", "15", "16", "17", "18", "19", "20", "21"]))
+
+
+solve(
+    opgelost,
+    team_mag_spelen,
+    # pre_solve=summary
+)

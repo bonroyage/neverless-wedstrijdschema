@@ -6,6 +6,13 @@ from typing import Any, Optional, Callable, TYPE_CHECKING
 if TYPE_CHECKING:
     from wedstrijd import Wedstrijd
 
+_sorteer_op_laatste_ronde: bool = True
+
+
+def sorteer_op_laatste_ronde(value: bool = True):
+    global _sorteer_op_laatste_ronde
+    _sorteer_op_laatste_ronde = value
+
 
 class Team:
     wedstrijden: list[Any]
@@ -57,7 +64,13 @@ class Team:
         return max(rondes) if len(rondes) > 0 else None
 
     def sort(self, week: int = None, team: Team = None):
-        laatste_ronde = self.laatste_ronde_in_week(week) if week is not None else None
+        global _sorteer_op_laatste_ronde
+
+        if _sorteer_op_laatste_ronde:
+            laatste_ronde = self.laatste_ronde_in_week(week) if week is not None else None
+        else:
+            laatste_ronde = 0
+
         return (
             laatste_ronde * -1 if laatste_ronde is not None else 99,
             self.aantal_wedstrijden_in_week(week) if week is not None else 0,
